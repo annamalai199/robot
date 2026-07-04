@@ -17,7 +17,6 @@ import time
 from typing import Optional
 
 from robot_assistant.config import config
-from robot_assistant.events import publish, ResponseEvent
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +64,8 @@ def get_intent_response(text: str) -> Optional[str]:
         Response text if intent is known, None if unknown (caller should try cache/LLM).
         
     Side Effects:
-        If a known intent is matched, publishes a RESPONSE event with path="deterministic".
+        None - does not publish events. The Decision Engine is responsible for publishing
+        RESPONSE events based on the return value.
     
     Example:
         >>> get_intent_response("Hi")
@@ -87,17 +87,8 @@ def get_intent_response(text: str) -> Optional[str]:
         logger.debug(f"Unknown intent: '{normalized}' (original: '{text}')")
         return None
     
-    # Known intent - publish RESPONSE event
+    # Known intent - return response text (engine will publish RESPONSE event)
     latency_ms = (time.time() - start_time) * 1000
-    
-    response_event: ResponseEvent = {
-        "event": "RESPONSE",
-        "text": response_text,
-        "path": "deterministic",
-        "latency_ms": latency_ms
-    }
-    
-    publish(response_event)
     
     logger.info(f"Deterministic intent matched: '{normalized}' -> '{response_text}' ({latency_ms:.2f}ms)")
     

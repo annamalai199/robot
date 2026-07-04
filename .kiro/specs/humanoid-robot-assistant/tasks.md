@@ -56,11 +56,13 @@
 - [x] Returns None for unknown intents (engine falls through to cache/LLM)
 - [x] **Does NOT emit ACTION events** (that's gesture_actions.py in Task 1.4)
 - [x] **Does NOT call motion planner or SafetyGate directly** (those are downstream components)
-- [x] Emits RESPONSE event with path="deterministic" for known intents
+- [x] ~~Emits RESPONSE event with path="deterministic" for known intents~~ **Amended in Task 1.7:** Returns text only; Decision Engine publishes RESPONSE
 - [x] `tests/decision_engine/test_intents.py` covers known/unknown intents (17 tests)
-- [x] Tests verify RESPONSE event is published for known intents
-- [x] Tests verify None return (no RESPONSE event) for unknown intents
+- [x] ~~Tests verify RESPONSE event is published for known intents~~ **Amended in Task 1.7:** Tests verify text return value; engine.py owns publishing
+- [x] Tests verify None return for unknown intents (no event publishing at all)
 - [x] Tests verify case-insensitivity and whitespace normalization
+
+**Architecture Note:** Originally, `get_intent_response()` published RESPONSE events directly. During Task 1.7 implementation, this was corrected to follow proper separation of concerns: `intents.py` is now a pure function that returns text, and `decision_engine/engine.py` has sole responsibility for publishing RESPONSE events. This prevents double-publishing and ensures consistent path metadata across all response sources (deterministic/cache/llm).
 
 **Dependencies:** Task 1.2
 

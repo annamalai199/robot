@@ -20,6 +20,8 @@ from robot_assistant.events.schemas import (
     ServoCommandEvent,
     TextInputEvent,
     ResponseEvent,
+    GreetingDeliveredEvent,
+    GreetingInitiatedEvent,
     Event,
     validate_event,
 )
@@ -43,6 +45,8 @@ __all__ = [
     "ServoCommandEvent",
     "TextInputEvent",
     "ResponseEvent",
+    "GreetingDeliveredEvent",
+    "GreetingInitiatedEvent",
     "Event",
     "validate_event",
 ]

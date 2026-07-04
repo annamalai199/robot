@@ -2,6 +2,11 @@
 
 Shows how STT transcripts with varying casing, whitespace, and punctuation
 are normalized and matched to known intents.
+
+NOTE: As of Task 1.7, intents.py returns text only - the Decision Engine
+(engine.py) is responsible for publishing RESPONSE events. This demo now
+shows the intent handler as a standalone component for testing/debugging.
+For full system behavior with RESPONSE events, use the Decision Engine.
 """
 
 import sys
@@ -10,7 +15,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from robot_assistant.decision_engine import intents
-from robot_assistant.events import bus, subscribe
 
 
 def main():
@@ -19,23 +23,13 @@ def main():
     print("=" * 70)
     print("Deterministic Intent Handler Demo")
     print("=" * 70)
-    
-    # Subscribe to RESPONSE events
-    responses_received = []
-    
-    def response_handler(event):
-        responses_received.append(event)
-        print(f"\n📨 [RESPONSE Event]")
-        print(f"   Text: \"{event['text']}\"")
-        print(f"   Path: {event['path']}")
-        print(f"   Latency: {event['latency_ms']:.2f}ms")
-    
-    subscribe("RESPONSE", response_handler)
-    
-    print("\n✅ Subscribed to RESPONSE events\n")
+    print("\nℹ️  NOTE: This demo shows intents.py as a standalone component.")
+    print("   In the full system, the Decision Engine (engine.py) subscribes to")
+    print("   TEXT_INPUT events and publishes RESPONSE events based on intent results.")
+    print("   This demo calls get_intent_response() directly for testing.")
     
     # Test cases simulating real STT transcripts
-    print("=" * 70)
+    print("\n" + "=" * 70)
     print("Scenario 1: Greeting with variations")
     print("=" * 70)
     
@@ -52,6 +46,7 @@ def main():
         response = intents.get_intent_response(test_input)
         if response:
             print(f"✓ Intent matched: \"{response}\"")
+            print(f"   (Decision Engine would publish RESPONSE event with path='deterministic')")
         else:
             print(f"✗ No match (would try cache/LLM)")
     
@@ -66,19 +61,18 @@ def main():
         "Tell me about the lab hours",
     ]
     
-    before_count = len(responses_received)
-    
+    unknown_count = 0
     for test_input in unknown_cases:
         print(f"\n🎤 User says: \"{test_input}\"")
         response = intents.get_intent_response(test_input)
         if response:
             print(f"✓ Intent matched: \"{response}\"")
         else:
-            print(f"✗ No match → fallthrough to cache/LLM")
+            print(f"✗ No match → Decision Engine will try cache/LLM next")
+            unknown_count += 1
     
-    after_count = len(responses_received)
-    print(f"\n📊 Unknown intents: {len(unknown_cases)}, RESPONSE events: {after_count - before_count}")
-    print("   (Should be 0 events for unknown intents)")
+    print(f"\n📊 Unknown intents: {unknown_count}/{len(unknown_cases)}")
+    print("   (These would fallthrough to Path B: Cache or Path C: LLM)")
     
     # Test normalization edge cases
     print("\n\n" + "=" * 70)
@@ -100,14 +94,43 @@ def main():
         else:
             print(f"✗ No match")
     
+    # Test latency
+    print("\n\n" + "=" * 70)
+    print("Scenario 4: Latency measurement")
+    print("=" * 70)
+    
+    import time
+    latencies = []
+    test_inputs = ["hi", "thanks", "help", "bye"] * 25  # 100 lookups
+    
+    for test_input in test_inputs:
+        start = time.time()
+        intents.get_intent_response(test_input)
+        latency_ms = (time.time() - start) * 1000
+        latencies.append(latency_ms)
+    
+    avg_latency = sum(latencies) / len(latencies)
+    max_latency = max(latencies)
+    
+    print(f"\n📊 Performed {len(latencies)} intent lookups")
+    print(f"📈 Average latency: {avg_latency:.3f}ms")
+    print(f"📈 Maximum latency: {max_latency:.3f}ms")
+    print(f"🎯 Target: <5ms (deterministic path should be instant)")
+    
+    if avg_latency < 5:
+        print("✅ PASS: Meets <5ms latency target")
+    else:
+        print("⚠️  WARNING: Exceeds 5ms latency target")
+    
     # Summary
     print("\n\n" + "=" * 70)
     print("Summary")
     print("=" * 70)
-    print(f"\n📊 Total RESPONSE events published: {len(responses_received)}")
-    print(f"📈 Average latency: {sum(r['latency_ms'] for r in responses_received) / len(responses_received):.2f}ms")
-    print(f"🎯 All responses via path='deterministic' (no LLM calls)")
-    print(f"\nℹ️  Unknown intents return None → Decision Engine tries cache/LLM next")
+    print(f"\n🎯 Intent handler provides deterministic responses (Path A)")
+    print(f"📊 Returns text for known intents, None for unknown")
+    print(f"⚡ Ultra-low latency: <5ms for instant responses")
+    print(f"\nℹ️  Integration: Decision Engine calls this from Path A,")
+    print(f"   then tries cache (Path B) and LLM (Path C) if None returned.")
     print("=" * 70 + "\n")
 
 

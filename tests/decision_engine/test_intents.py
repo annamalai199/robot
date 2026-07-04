@@ -21,22 +21,23 @@ def test_known_intent_returns_response():
     assert "hello" in response.lower()
 
 
-def test_known_intent_publishes_response_event():
-    """Test that known intent publishes RESPONSE event with path='deterministic'."""
+def test_known_intent_returns_response_without_publishing():
+    """Test that known intent returns canned response but does NOT publish event.
+    
+    The Decision Engine (engine.py) is responsible for publishing RESPONSE events,
+    not the intents module. This ensures proper separation of concerns.
+    """
     received_events = []
     bus.subscribe("RESPONSE", lambda e: received_events.append(e))
     
     response = intents.get_intent_response("hello")
     
+    # Should return response text
     assert response is not None
-    assert len(received_events) == 1
+    assert "hello" in response.lower() or "hi" in response.lower()
     
-    event = received_events[0]
-    assert event["event"] == "RESPONSE"
-    assert event["text"] == response
-    assert event["path"] == "deterministic"
-    assert event["latency_ms"] >= 0
-    assert event["latency_ms"] < 10  # Should be < 10ms for dict lookup
+    # Should NOT publish RESPONSE event (that's the Decision Engine's job)
+    assert len(received_events) == 0
 
 
 def test_unknown_intent_returns_none():
@@ -193,10 +194,11 @@ def test_does_not_emit_action_event():
 
 
 def test_multiple_intents_in_sequence():
-    """Test multiple intent lookups work correctly."""
-    received_events = []
-    bus.subscribe("RESPONSE", lambda e: received_events.append(e))
+    """Test multiple intent lookups work correctly.
     
+    Note: intents.py no longer publishes RESPONSE events. The Decision Engine
+    (engine.py) handles that. This test just verifies return values.
+    """
     # Process multiple intents
     r1 = intents.get_intent_response("hi")
     r2 = intents.get_intent_response("thanks")
@@ -207,10 +209,6 @@ def test_multiple_intents_in_sequence():
     assert r2 is not None
     assert r3 is None  # Unknown
     assert r4 is not None
-    
-    # Should have 3 RESPONSE events (not 4, since r3 is None)
-    assert len(received_events) == 3
-    assert all(e["path"] == "deterministic" for e in received_events)
 
 
 def test_latency_target():
