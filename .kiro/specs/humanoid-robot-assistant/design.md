@@ -194,20 +194,24 @@ Question → normalize text
            └─ Write back to both caches + tag data_version
 ```
 
-**Entity Extraction (`entity_extractor.py`):**
-- **Date words:** "today", "yesterday", explicit dates → normalized date value
-- **Subject/person names:** Simple regex/spaCy for named entities
-- **Output:** `{"date": "2026-07-04", "subject": "attendance", "person": None}`
+**Main Loop Requirements:**
+- Must call `exact_cache.reload_data_version()` periodically (~1x/minute) to detect CrewAI file updates
+- Must call `session_state.check_timeouts()` periodically (~1x/second) for greeting timeout enforcement
 
-**Critical Regression Test:**
+**Entity Extraction (`entity_extractor.py`):**
+- **Subject:** Regex for common topics (library, canteen, hod, placement, lab, hostel, etc.)
+- **Person names:** Capitalized words not in stopword list
+- **Output:** `{"subject": "library", "person": "Dr. Kumar"}`  (both keys optional, None if not found)
+
+**Critical Regression Test (Entity Gate Justification):**
 ```python
-# This MUST NOT cache-hit (entity gate prevents it)
-cache.put("What's my attendance today?", answer_1, data_version=1)
-result = cache.get("What was my attendance yesterday?")
-assert result is None  # Different date entity!
+# This MUST NOT cache-hit (entity gate prevents wrong-subject answer)
+cache.put("Who is the HOD?", "Dr. Rajesh Kumar", data_version=1)
+result = cache.get("Who is the placement officer?")
+assert result is None  # Different subject entity (hod vs placement) - semantically similar but wrong answer!
 ```
 
-**Rationale:** Semantic similarity alone is dangerous — "attendance today" and "attendance yesterday" have cosine similarity ~0.95 but different correct answers. Entity gate adds ~2ms but prevents wrong answers.
+**Rationale:** Semantic similarity alone is dangerous — "Who is the HOD?" and "Who is the placement officer?" have high cosine similarity (~0.90+) but completely different correct answers. Entity extraction catches that 'hod' ≠ 'placement', preventing cache hit. Entity gate adds ~2ms but prevents returning the wrong person's name.
 
 ---
 
@@ -591,56 +595,60 @@ embedding = model.encode(question)  # Returns 384-dim vector
 
 ---
 
-### 2. Entity Extraction Approach
-**Decision:** Regex + dateparser (lightweight)
+### 2. Entity Extraction Approach (No Date Extraction)
+**Decision:** Regex-based extraction for subject and person only (no dateparser)
 
 **Rationale:**
 - **Latency:** <2ms vs. spaCy's 15-30ms (NER + dependency parsing overhead)
 - **Sufficient accuracy:** College project questions are templated/predictable
-  - Date: "today", "yesterday", "tomorrow", ISO dates → dateparser handles 95%+ cases
-  - Subject: Regex for known topics (attendance, schedule, HOD, lab, exam) → good enough
+  - Subject: Regex for known topics (hod, library, canteen, placement, hostel, lab, department, helpdesk, sports, parking, auditorium, wifi) → good enough
   - Person: Capitalized words not in stoplist → simple but effective
 - **spaCy overkill:** Loading `en_core_web_sm` adds 30MB memory + startup time for minimal gain
 - **Entity gate is binary:** Only need to detect entities exist and match, not extract complex relationships
+- **No date extraction:** All memory facts are static/non-temporal (people, facilities, general info). No schedules, attendance, or time-sensitive data in current scope.
 
 **Implementation:**
 ```python
 import re
-from dateparser import parse as parse_date
 
-DATE_PATTERNS = r'\b(today|yesterday|tomorrow|monday|tuesday|...)\b'
-SUBJECT_PATTERNS = r'\b(attendance|schedule|hod|lab|exam|class|professor)\b'
+SUBJECT_PATTERNS = r'\b(hod|library|canteen|placement|hostel|lab|department|helpdesk|sports|parking|auditorium|wifi|principal|advisor|instructor|officer|facilities|dress|code)\b'
 
 def extract_entities(question: str) -> dict:
+    """Extract subject and person entities (no date extraction).
+    
+    Returns dict with 'subject' and 'person' keys (both may be None).
+    """
     text = question.lower()
     
-    # Date extraction
-    date_match = re.search(DATE_PATTERNS, text)
-    date_val = parse_date(date_match.group()) if date_match else None
-    
     # Subject extraction
-    subject_match = re.search(SUBJECT_PATTERNS, text)
+    subject_match = re.search(SUBJECT_PATTERNS, text, re.IGNORECASE)
     subject_val = subject_match.group() if subject_match else None
     
     # Person extraction (capitalized words, simple heuristic)
     words = question.split()
-    person_val = next((w for w in words if w[0].isupper() and w.lower() not in STOPWORDS), None)
+    person_val = None
+    for word in words:
+        if word and word[0].isupper():
+            word_clean = word.rstrip('.,!?;:')
+            if word_clean.lower() not in STOPWORDS:
+                person_val = word_clean
+                break
     
-    return {"date": date_val, "subject": subject_val, "person": person_val}
+    return {"subject": subject_val, "person": person_val}
 ```
 
 **Upgrade path:** If accuracy insufficient after testing, add spaCy as Phase 6 optimization.
 
 ---
 
-### 3. Memory Tool Schema & Demo Facts
-**Decision:** Seed `data/memory.db` with college-specific facts in 3 categories
+### 3. Memory Tool Schema & Demo Facts (No Date-Sensitive Data)
+**Decision:** Seed `data/memory.db` with static college facts in 3 categories (people, facilities, general)
 
 **Schema:**
 ```sql
 CREATE TABLE memories (
     id INTEGER PRIMARY KEY,
-    category TEXT,  -- 'person', 'schedule', 'general'
+    category TEXT,  -- 'person', 'facility', 'general'
     key TEXT UNIQUE,
     value TEXT,
     metadata TEXT,  -- JSON for structured data
@@ -651,7 +659,7 @@ CREATE INDEX idx_category ON memories(category);
 CREATE INDEX idx_key ON memories(key);
 ```
 
-**Seed Data (20 sample facts):**
+**Seed Data (20 static facts - no schedules, attendance, or time-sensitive data):**
 
 **People (5 facts):**
 ```sql
@@ -662,27 +670,27 @@ INSERT INTO memories VALUES (4, 'person', 'class_advisor', 'Prof. Venkat Raman',
 INSERT INTO memories VALUES (5, 'person', 'placement_officer', 'Mr. Suresh Naidu', '{"role": "Training and Placement"}', 1720051200);
 ```
 
-**Schedule (10 facts):**
+**Facilities (10 facts):**
 ```sql
-INSERT INTO memories VALUES (6, 'schedule', 'lab_hours_monday', '2:00 PM - 5:00 PM', '{"subject": "AI Lab", "room": "Lab 301"}', 1720051200);
-INSERT INTO memories VALUES (7, 'schedule', 'lab_hours_wednesday', '10:00 AM - 1:00 PM', '{"subject": "ML Lab", "room": "Lab 302"}', 1720051200);
-INSERT INTO memories VALUES (8, 'schedule', 'office_hours_hod', 'Monday & Thursday 3-5 PM', '{"room": "HOD Office, Block A"}', 1720051200);
-INSERT INTO memories VALUES (9, 'schedule', 'library_hours', '8:00 AM - 8:00 PM', '{"weekend": "9 AM - 5 PM"}', 1720051200);
-INSERT INTO memories VALUES (10, 'schedule', 'exam_schedule', 'Final exams: Dec 15-30, 2026', '{"mid_term": "Oct 10-20"}', 1720051200);
-INSERT INTO memories VALUES (11, 'schedule', 'semester_start', 'July 1, 2026', '{"end": "November 30, 2026"}', 1720051200);
-INSERT INTO memories VALUES (12, 'schedule', 'class_timings', '9:00 AM - 4:00 PM', '{"lunch": "1-2 PM"}', 1720051200);
-INSERT INTO memories VALUES (13, 'schedule', 'project_deadline', 'November 15, 2026', '{"submission": "online portal"}', 1720051200);
-INSERT INTO memories VALUES (14, 'schedule', 'holiday_next', 'Independence Day - Aug 15', '{"type": "national holiday"}', 1720051200);
-INSERT INTO memories VALUES (15, 'schedule', 'career_fair', 'September 20-22, 2026', '{"venue": "Main Auditorium"}', 1720051200);
+INSERT INTO memories VALUES (6, 'facility', 'library_location', 'Central Library, Block B', '{"floors": 3, "study_rooms": 12}', 1720051200);
+INSERT INTO memories VALUES (7, 'facility', 'library_rules', 'No food/drinks, silence in reading zones', '{"checkout": "2 weeks"}', 1720051200);
+INSERT INTO memories VALUES (8, 'facility', 'canteen_location', 'Ground floor, Block A', '{"capacity": "200 seats"}', 1720051200);
+INSERT INTO memories VALUES (9, 'facility', 'canteen_offerings', 'Veg/non-veg meals, snacks, beverages', '{"timings": "8 AM - 6 PM"}', 1720051200);
+INSERT INTO memories VALUES (10, 'facility', 'sports_facilities', 'Cricket ground, basketball court, gym', '{"indoor": "badminton, TT"}', 1720051200);
+INSERT INTO memories VALUES (11, 'facility', 'parking_info', 'Two-wheeler: Block C rear, Four-wheeler: North lot', '{"slots": "300 bikes, 50 cars"}', 1720051200);
+INSERT INTO memories VALUES (12, 'facility', 'department_location', 'Block C, 3rd Floor', '{"dept": "Computer Science", "rooms": "301-320"}', 1720051200);
+INSERT INTO memories VALUES (13, 'facility', 'auditorium_capacity', '500 seats', '{"name": "Main Auditorium", "equipment": "projector, sound system"}', 1720051200);
+INSERT INTO memories VALUES (14, 'facility', 'placement_cell_location', 'Block B, 2nd Floor', '{"contact": "placement@college.edu"}', 1720051200);
+INSERT INTO memories VALUES (15, 'facility', 'lab_equipment', 'Robots: 5 humanoid units, 20 workstations', '{"reservation": "via lab portal"}', 1720051200);
 ```
 
 **General (5 facts):**
 ```sql
-INSERT INTO memories VALUES (16, 'general', 'library_location', 'Central Library, Block B', '{"floors": 3, "study_rooms": 12}', 1720051200);
-INSERT INTO memories VALUES (17, 'general', 'canteen_menu_today', 'Veg thali, Biryani, Dosa', '{"timings": "12-2:30 PM"}', 1720051200);
-INSERT INTO memories VALUES (18, 'general', 'department_location', 'Block C, 3rd Floor', '{"dept": "Computer Science"}', 1720051200);
-INSERT INTO memories VALUES (19, 'general', 'helpdesk_number', '+91-80-12345678', '{"email": "helpdesk@college.edu"}', 1720051200);
-INSERT INTO memories VALUES (20, 'general', 'lab_equipment', 'Robots: 5 humanoid units', '{"reservation": "via lab portal"}', 1720051200);
+INSERT INTO memories VALUES (16, 'general', 'helpdesk_number', '+91-80-12345678', '{"email": "helpdesk@college.edu", "hours": "9 AM - 5 PM"}', 1720051200);
+INSERT INTO memories VALUES (17, 'general', 'wifi_access', 'SSID: CollegeNet, Password from IT desk', '{"coverage": "all blocks"}', 1720051200);
+INSERT INTO memories VALUES (18, 'general', 'dress_code', 'Formal or semi-formal, ID card mandatory', '{"casual_fridays": true}', 1720051200);
+INSERT INTO memories VALUES (19, 'general', 'hostel_info', 'On-campus hostel for 300 students', '{"contact": "warden@college.edu"}', 1720051200);
+INSERT INTO memories VALUES (20, 'general', 'college_website', 'https://www.college.edu', '{"portal": "students.college.edu"}', 1720051200);
 ```
 
 **MCP Tool Query Logic:**
@@ -716,7 +724,11 @@ def query_memory(query: str) -> dict:
     return {"answer": "I don't have that information.", "confidence": 0.0}
 ```
 
-**Rationale:** College-contextual facts make demo relatable. 20 facts sufficient to showcase cache/LLM paths without overwhelming scope.
+**Rationale:** 
+- College-contextual facts make demo relatable
+- 20 static facts sufficient to showcase cache/LLM paths without overwhelming scope
+- **No date-sensitive data:** All facts are timeless (people, locations, policies) - no schedules, attendance, or time-based information
+- This simplifies cache TTL logic (all facts can use indefinite cache) and entity extraction (no date parsing needed)
 
 ---
 
@@ -867,8 +879,8 @@ class VisionPipeline:
 | Question | Decision | Key Reason |
 |----------|----------|------------|
 | **Embedding model** | all-MiniLM-L6-v2 (384-dim) | Fits <35ms budget; mpnet would exceed by 1.6x |
-| **Entity extraction** | Regex + dateparser | <2ms vs spaCy's 15-30ms; sufficient for templated college questions |
-| **Memory facts** | 20 college-contextual facts (people/schedule/general) | Relatable demo content, showcases cache+LLM without scope creep |
+| **Entity extraction** | Regex-based (subject + person only, no dates) | <2ms vs spaCy's 15-30ms; sufficient for templated college questions; no date-sensitive data in scope |
+| **Memory facts** | 20 static college facts (people/facilities/general) | Relatable demo content; no schedules/attendance (all non-temporal); showcases cache+LLM without scope creep |
 | **Face registration** | Auto-register, manual name later | Zero-friction demo; admin assigns names post-detection |
 | **Vision FPS during LLM** | Drop to 2 FPS (from 10 FPS) | Detects person leaving within 1s; frees CPU for LLM; validated on Pi 5 |
 
@@ -889,7 +901,7 @@ Before declaring laptop phase complete:
   3. Leave → AWAY, re-enter → "welcome back" (no re-greeting)
   4. Novel question → LLM answer (1-3s)
   5. Repeat question → cache hit (<35ms)
-  6. Today/yesterday question pair → both answered fresh (entity gate works)
+  6. HOD/placement officer question pair → different answers (entity gate prevents wrong-person cache hit)
 - [ ] README.md documents:
   - How to run (`python main.py`)
   - How to add known face (SQLite insert + FAISS add)

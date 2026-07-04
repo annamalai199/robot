@@ -70,9 +70,12 @@ scripts/
    - created_at, last_seen timestamps
 
 2. **memories** - QA facts (20 seed entries)
-   - People: HOD, lab instructor, principal, class advisor, placement officer
-   - Schedule: Lab hours, office hours, library, exams, deadlines, holidays
-   - General: Library location, canteen menu, department, helpdesk, equipment
+   - **Original (Task 1.1):** People (5), Schedule (10), General (5)
+   - **Updated (Scope Change):** People (5), Facilities (10), General (5)
+     - People: HOD, lab instructor, principal, class advisor, placement officer
+     - Facilities: Library location/rules, canteen location/offerings, sports, parking, auditorium, placement cell, department, lab equipment
+     - General: Helpdesk, wifi, dress code, hostel info, college website
+   - **Note:** All facts are now static/non-temporal (no schedules, dates, or time-sensitive data)
 
 3. **metadata** - Data versioning
    - data_version = 1 (initialized)

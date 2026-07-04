@@ -1,9 +1,12 @@
 """Initialize memory database with seed facts for demo.
 
 Creates memory.db with 20 college-contextual facts across 3 categories:
-- People (5 facts)
-- Schedule (10 facts)
-- General (5 facts)
+- People (5 facts) - Faculty and staff information
+- Facilities (10 facts) - Locations, resources, services, equipment
+- General (5 facts) - Policies, contact info, general college info
+
+Note: No date-sensitive or schedule-based facts. All information is static
+and non-temporal, suitable for indefinite caching.
 """
 
 import sqlite3
@@ -73,7 +76,7 @@ def init_database():
     import time
     timestamp = time.time()
     
-    # People (5 facts)
+    # People (5 facts) - Faculty and staff
     people_facts = [
         (1, 'person', 'hod_name', 'Dr. Rajesh Kumar', '{"title": "Professor", "department": "Computer Science"}', timestamp),
         (2, 'person', 'lab_instructor', 'Ms. Priya Sharma', '{"subjects": ["AI Lab", "ML Lab"]}', timestamp),
@@ -82,30 +85,30 @@ def init_database():
         (5, 'person', 'placement_officer', 'Mr. Suresh Naidu', '{"role": "Training and Placement"}', timestamp),
     ]
     
-    # Schedule (10 facts)
-    schedule_facts = [
-        (6, 'schedule', 'lab_hours_monday', '2:00 PM - 5:00 PM', '{"subject": "AI Lab", "room": "Lab 301"}', timestamp),
-        (7, 'schedule', 'lab_hours_wednesday', '10:00 AM - 1:00 PM', '{"subject": "ML Lab", "room": "Lab 302"}', timestamp),
-        (8, 'schedule', 'office_hours_hod', 'Monday & Thursday 3-5 PM', '{"room": "HOD Office, Block A"}', timestamp),
-        (9, 'schedule', 'library_hours', '8:00 AM - 8:00 PM', '{"weekend": "9 AM - 5 PM"}', timestamp),
-        (10, 'schedule', 'exam_schedule', 'Final exams: Dec 15-30, 2026', '{"mid_term": "Oct 10-20"}', timestamp),
-        (11, 'schedule', 'semester_start', 'July 1, 2026', '{"end": "November 30, 2026"}', timestamp),
-        (12, 'schedule', 'class_timings', '9:00 AM - 4:00 PM', '{"lunch": "1-2 PM"}', timestamp),
-        (13, 'schedule', 'project_deadline', 'November 15, 2026', '{"submission": "online portal"}', timestamp),
-        (14, 'schedule', 'holiday_next', 'Independence Day - Aug 15', '{"type": "national holiday"}', timestamp),
-        (15, 'schedule', 'career_fair', 'September 20-22, 2026', '{"venue": "Main Auditorium"}', timestamp),
+    # Facilities (10 facts) - Locations, resources, services, equipment
+    facilities_facts = [
+        (6, 'facility', 'library_location', 'Central Library, Block B, 3rd Floor', '{"floors": 3, "study_rooms": 12, "capacity": 200}', timestamp),
+        (7, 'facility', 'library_rules', 'Silence mandatory, no food/drinks, laptops allowed', '{"wifi": "available", "printing": "floor 1"}', timestamp),
+        (8, 'facility', 'canteen_location', 'Ground Floor, Block A', '{"seating": 150, "payment": "cash and card"}', timestamp),
+        (9, 'facility', 'canteen_offerings', 'South Indian, North Indian, Chinese, Beverages', '{"veg": "yes", "non_veg": "limited"}', timestamp),
+        (10, 'facility', 'lab_equipment', '5 humanoid robots available for projects', '{"reservation": "via lab portal", "location": "Lab 301"}', timestamp),
+        (11, 'facility', 'sports_facilities', 'Indoor: Badminton, Table Tennis; Outdoor: Cricket, Football', '{"gym": "yes", "swimming_pool": "no"}', timestamp),
+        (12, 'facility', 'placement_cell', 'Block C, 2nd Floor', '{"timings": "9 AM - 5 PM", "services": "training, counseling, internships"}', timestamp),
+        (13, 'facility', 'department_location', 'Computer Science: Block C, 3rd Floor', '{"staff_room": "Room 301", "labs": "301-305"}', timestamp),
+        (14, 'facility', 'auditorium_capacity', 'Main Auditorium seats 500 people', '{"AC": "yes", "projector": "yes", "sound_system": "Dolby"}', timestamp),
+        (15, 'facility', 'parking_info', 'Two-wheeler: Block D; Four-wheeler: Behind Block A', '{"capacity": "200 bikes, 50 cars", "security": "24x7"}', timestamp),
     ]
     
-    # General (5 facts)
+    # General (5 facts) - Policies, contact info, general college info
     general_facts = [
-        (16, 'general', 'library_location', 'Central Library, Block B', '{"floors": 3, "study_rooms": 12}', timestamp),
-        (17, 'general', 'canteen_menu_today', 'Veg thali, Biryani, Dosa', '{"timings": "12-2:30 PM"}', timestamp),
-        (18, 'general', 'department_location', 'Block C, 3rd Floor', '{"dept": "Computer Science"}', timestamp),
-        (19, 'general', 'helpdesk_number', '+91-80-12345678', '{"email": "helpdesk@college.edu"}', timestamp),
-        (20, 'general', 'lab_equipment', 'Robots: 5 humanoid units', '{"reservation": "via lab portal"}', timestamp),
+        (16, 'general', 'helpdesk_number', '+91-80-12345678', '{"email": "helpdesk@college.edu", "location": "Admin Block"}', timestamp),
+        (17, 'general', 'wifi_access', 'SSID: CollegeNet, Password available at helpdesk', '{"coverage": "all buildings", "speed": "100 Mbps"}', timestamp),
+        (18, 'general', 'dress_code', 'Formal wear mandatory on weekdays, casual on Saturdays', '{"id_card": "mandatory"}', timestamp),
+        (19, 'general', 'hostel_info', 'Separate hostels for boys and girls, 500 capacity each', '{"mess": "included", "wifi": "yes", "warden_contact": "+91-80-12345690"}', timestamp),
+        (20, 'general', 'college_website', 'www.college.edu', '{"student_portal": "portal.college.edu", "email_format": "firstname.lastname@college.edu"}', timestamp),
     ]
     
-    all_facts = people_facts + schedule_facts + general_facts
+    all_facts = people_facts + facilities_facts + general_facts
     
     cursor.executemany(
         "INSERT INTO memories VALUES (?, ?, ?, ?, ?, ?)",
@@ -113,7 +116,7 @@ def init_database():
     )
     
     print(f"✓ Inserted {len(people_facts)} people facts")
-    print(f"✓ Inserted {len(schedule_facts)} schedule facts")
+    print(f"✓ Inserted {len(facilities_facts)} facilities facts")
     print(f"✓ Inserted {len(general_facts)} general facts")
     print(f"✓ Total: {len(all_facts)} facts")
     

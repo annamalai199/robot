@@ -37,8 +37,11 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"  # Sentence transformer model (384-dim)
 EMBEDDING_DIM = 384  # Dimension of question embeddings
 
 # Cache Time-to-Live
-CACHE_TTL_SECONDS = 3600  # 1 hour for time-sensitive data
-CACHE_INDEFINITE = -1  # Use for static facts
+# Note: All current memory facts are static/non-temporal (people, facilities, general info).
+# No date-sensitive data (attendance, schedules, exams) in current scope.
+# TTL mechanism stays available but unused - all facts can use CACHE_INDEFINITE policy.
+CACHE_TTL_SECONDS = 3600  # Reserved for time-sensitive data if added later
+CACHE_INDEFINITE = -1  # Use for static facts (current default)
 
 # =============================================================================
 # Safety Configuration
@@ -121,8 +124,8 @@ INTENT_RESPONSES = {
     "goodbye": "Goodbye! Have a great day!",
     "thanks": "You're welcome!",
     "thank you": "You're welcome!",
-    "help": "I can answer questions about schedules, people, and general information. I can also respond to gestures like hand raises.",
-    "what can you do": "I can answer questions about schedules, people, and general information. I can also respond to gestures like hand raises.",
+    "help": "I can answer questions about people, facilities, and general college information. I can also respond to gestures like hand raises.",
+    "what can you do": "I can answer questions about people, facilities, and general college information. I can also respond to gestures like hand raises.",
 }
 
 # Gesture to action mapping

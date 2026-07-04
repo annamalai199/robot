@@ -175,12 +175,12 @@
 
 **Acceptance Criteria:**
 - [ ] `qa_cache/entity_extractor.py` has `extract_entities(question) -> dict`
-- [ ] Returns dict with keys: date, subject, person (all optional)
-- [ ] Date extraction: "today", "yesterday", "tomorrow", explicit dates
-- [ ] Subject extraction: regex for common topics (attendance, schedule, HOD, etc.)
-- [ ] Person extraction: capitalized words not in stopword list
-- [ ] `tests/qa_cache/test_entity_extractor.py` tests today/yesterday distinction
+- [ ] Returns dict with keys: subject, person (both optional, None if not found)
+- [ ] Subject extraction: regex for common topics (hod, library, canteen, placement, hostel, lab, etc.)
+- [ ] Person extraction: capitalized words not in stopword list  
+- [ ] `tests/qa_cache/test_entity_extractor.py` tests different subject/person extraction
 - [ ] Returns None values (not errors) for missing entities
+- [ ] No date extraction (no dateparser dependency) - all data is non-temporal
 
 **Dependencies:** None (pure NLP, no other modules)
 
@@ -217,7 +217,7 @@
 - [ ] On semantic candidate, extracts entities from both questions
 - [ ] Returns hit only if entities match AND data_version matches
 - [ ] `tests/qa_cache/test_cache_manager.py` includes critical regression test:
-  - [ ] "attendance today" cached, then "attendance yesterday" asked → MISS
+  - [ ] "Who is the HOD?" cached, then "Who is the placement officer?" asked → MISS (entity gate prevents wrong-person answer)
 - [ ] Test also verifies old data_version treated as miss
 
 **Dependencies:** Tasks 1.8, 1.9, 1.10
@@ -528,9 +528,9 @@
 - [ ] Asserts LLM called (Path C)
 - [ ] Asks exact same question → asserts cache hit, zero additional LLM calls
 - [ ] Asks paraphrase → asserts semantic cache hit
-- [ ] **Critical regression:** asks "attendance today", then "attendance yesterday"
-  - [ ] Asserts both answered (no cache collision)
-  - [ ] Asserts entity gate prevented wrong cache hit
+- [ ] **Critical regression:** asks "Who is the HOD?", then "Who is the placement officer?"
+  - [ ] Asserts both answered separately (no cache collision)
+  - [ ] Asserts entity gate prevented wrong-person cache hit (semantically similar but different person)
 - [ ] All cache hits < 35ms
 
 **Dependencies:** Tasks 1.7, 1.11, 1.14
@@ -564,9 +564,16 @@
 - [ ] Starts vision pipeline in background thread
 - [ ] Starts voice input loop (STT)
 - [ ] Decision engine subscribes to all events
+- [ ] **Main loop calls `session_state.check_timeouts()` ~1x/second** (Task 1.6 requirement)
+- [ ] **Main loop calls `exact_cache.reload_data_version()` ~1x/minute** (Task 1.8 requirement)
 - [ ] Graceful shutdown on Ctrl+C
 - [ ] Logs key events to console (IDENTITY_RESOLVED, ACTION, cache hits/misses)
 - [ ] No test (manual demo script validates this)
+
+**Critical Notes:**
+- `check_timeouts()`: Enforces 5-second greeting timeout (NEW → GREETED if TTS fails)
+- `reload_data_version()`: Detects CrewAI nightly refresh file updates (invalidates stale cache)
+- Without these periodic calls, greeting timeout and cache staleness won't work correctly
 
 **Dependencies:** Tasks 1.7, 2.2, 2.3, 3.7
 
