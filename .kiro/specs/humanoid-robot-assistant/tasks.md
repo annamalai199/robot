@@ -24,68 +24,92 @@
 ---
 
 ### Task 1.2: Event Bus & Schemas
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 2 hours
 **Description:** Implement in-process pub/sub event bus and TypedDict schemas for all event types.
 
 **Acceptance Criteria:**
-- [ ] `events/bus.py` implements `publish()` and `subscribe()` functions
-- [ ] `events/schemas.py` defines all 6 event types as TypedDicts
-- [ ] `tests/test_bus.py` verifies publish/subscribe fan-out
-- [ ] `tests/test_schemas.py` validates schema construction
-- [ ] All tests pass
+- [x] `events/bus.py` implements `publish()` and `subscribe()` functions
+- [x] `events/schemas.py` defines all 9 event types as TypedDicts
+- [x] `tests/test_bus.py` verifies publish/subscribe fan-out (14 tests)
+- [x] `tests/test_schemas.py` validates schema construction (17 tests)
+- [x] `tests/test_bus_integration_example.py` demonstrates full event flows (4 tests)
+- [x] All 35 tests pass
+- [x] Thread-safe implementation with stress test
+- [x] Error handling for invalid events and callback exceptions
 
 **Dependencies:** Task 1.1
+
+**Completed:** 2026-07-04
 
 ---
 
 ### Task 1.3: Deterministic Intent Handler
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 1.5 hours
 **Description:** Create fixed lookup table for text intents (hi/bye/help) with canned responses.
 
 **Acceptance Criteria:**
-- [ ] `decision_engine/intents.py` has `get_intent_response(text: str) -> str | None`
-- [ ] Handles at least 5 common intents (hi, bye, help, thanks, what can you do)
-- [ ] Case-insensitive, whitespace-normalized matching
-- [ ] `tests/decision_engine/test_intents.py` covers known/unknown intents
-- [ ] Returns None for unknown intents (engine falls through to cache/LLM)
+- [x] `decision_engine/intents.py` has `get_intent_response(text: str) -> str | None`
+- [x] Handles at least 5 common intents (hi, bye, help, thanks, what can you do)
+- [x] Case-insensitive, whitespace-normalized matching
+- [x] Returns None for unknown intents (engine falls through to cache/LLM)
+- [x] **Does NOT emit ACTION events** (that's gesture_actions.py in Task 1.4)
+- [x] **Does NOT call motion planner or SafetyGate directly** (those are downstream components)
+- [x] Emits RESPONSE event with path="deterministic" for known intents
+- [x] `tests/decision_engine/test_intents.py` covers known/unknown intents (17 tests)
+- [x] Tests verify RESPONSE event is published for known intents
+- [x] Tests verify None return (no RESPONSE event) for unknown intents
+- [x] Tests verify case-insensitivity and whitespace normalization
 
 **Dependencies:** Task 1.2
+
+**Completed:** 2026-07-04
 
 ---
 
 ### Task 1.4: Gesture-Action Mapping
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 1 hour
 **Description:** Create fixed lookup table for gesture-to-action mapping.
 
 **Acceptance Criteria:**
-- [ ] `decision_engine/gesture_actions.py` has `get_action(gesture: str) -> str | None`
-- [ ] Maps HAND_RAISED → HANDSHAKE
-- [ ] Extensible for future gestures (WAVE, THUMBS_UP, etc.)
-- [ ] `tests/decision_engine/test_gesture_actions.py` covers known/unknown gestures
-- [ ] Returns None for unknown gestures
+- [x] `decision_engine/gesture_actions.py` has `get_action(gesture: str) -> str | None`
+- [x] Maps HAND_RAISED → HANDSHAKE
+- [x] Extensible for future gestures (WAVE, THUMBS_UP, etc.)
+- [x] Subscribes to GESTURE_DETECTED events and publishes ACTION events
+- [x] **Does NOT call motion planner or SafetyGate directly** (downstream components)
+- [x] Unknown gestures produce no ACTION event (safe no-op, not error)
+- [x] `tests/decision_engine/test_gesture_actions.py` covers known/unknown gestures (17 tests)
+- [x] Tests verify ACTION event is published for known gestures
+- [x] Tests verify no ACTION event for unknown gestures (critical safety test)
+- [x] Tests use synthetic GESTURE_DETECTED events (vision pipeline doesn't exist yet)
 
 **Dependencies:** Task 1.2
+
+**Completed:** 2026-07-04
 
 ---
 
 ### Task 1.5: SafetyGate Implementation
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 2 hours
 **Description:** Implement software safety layer for action execution with distance/sensor checks.
 
 **Acceptance Criteria:**
-- [ ] `decision_engine/safety_gate.py` implements `safety_gate(action, distance_cm, sensor_ok) -> bool`
-- [ ] Blocks if `sensor_ok=False` (hard block, highest priority)
-- [ ] Allows if `distance_cm=None` with logged warning (simulated phase)
-- [ ] Blocks if distance < 10cm or > 60cm (from config)
-- [ ] Allows if 10cm ≤ distance ≤ 60cm
-- [ ] `tests/decision_engine/test_safety_gate.py` covers all 6 cases
-- [ ] Latency < 5ms (simple conditionals, no I/O)
+- [x] `decision_engine/safety_gate.py` implements `safety_gate(action, distance_cm, sensor_ok) -> bool`
+- [x] Blocks if `sensor_ok=False` (hard block, highest priority) - does NOT default to allow
+- [x] Allows if `distance_cm=None` with logged warning (simulated phase)
+- [x] Blocks if distance < 10cm or > 60cm (from config) - publishes ACTION_BLOCKED with reason
+- [x] Allows if 10cm ≤ distance ≤ 60cm
+- [x] `tests/decision_engine/test_safety_gate.py` covers all 5 cases + edge cases (19 tests)
+- [x] Latency < 5ms (simple conditionals, no I/O) - measured <0.01ms average
+- [x] **Does NOT call motion planner directly** (event-driven architecture)
+- [x] Publishes ACTION_BLOCKED with correct reason field (sensor_fault, target_too_close, target_too_far)
 
 **Dependencies:** Task 1.1
+
+**Completed:** 2026-07-04
 
 ---
 
