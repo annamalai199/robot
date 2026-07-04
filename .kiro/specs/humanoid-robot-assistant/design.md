@@ -90,6 +90,19 @@ robot_assistant/
 - `ACTION` → SafetyGate → Motion Planner
 - `ACTION_BLOCKED` → Logging/UI
 - `SERVO_COMMAND` → Motion Planner
+- `TEXT_INPUT` → Decision Engine
+- `RESPONSE` → TTS
+- `GREETING_DELIVERED` → Session State Store (marks greeting completion, not just decision)
+
+**Event Details:**
+
+**GREETING_DELIVERED:**
+- **Purpose:** Marks that TTS has finished delivering a greeting to a person
+- **Published by:** Decision Engine (Task 1.7) after TTS completes
+- **Subscribed by:** Session State Store
+- **Schema:** `{"event": "GREETING_DELIVERED", "embedding_id": str, "track_id": str}`
+- **Critical:** State only transitions NEW → GREETED after this event fires, NOT on IDENTITY_RESOLVED. This ensures greeting is actually spoken before state changes.
+- **Responsibility:** Decision Engine detects NEW state, generates greeting, sends to TTS, then publishes GREETING_DELIVERED after TTS completion
 
 **Implementation:**
 ```python
