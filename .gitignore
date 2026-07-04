@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Data Files (contain biometric/personal data - DO NOT COMMIT)
+robot_assistant/data/memory.db
+robot_assistant/data/vector_index/
+robot_assistant/data/*.index
+robot_assistant/data/*.json
+robot_assistant/data/*.pkl
+
+# Logs
+*.log
+logs/
+
+# Models (download separately, too large for git)
+*.pt
+*.onnx
+*.pth
+*.bin
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Temporary files
+*.tmp
+*.bak
+temp/
+tmp/
+
+# OS
+Thumbs.db

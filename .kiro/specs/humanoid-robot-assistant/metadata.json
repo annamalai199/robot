@@ -1,0 +1,15 @@
+{
+  "specId": "humanoid-robot-assistant",
+  "title": "Humanoid AI Robot Assistant",
+  "description": "A lightweight, latency-optimized humanoid robot assistant with vision-based gesture recognition, face identification, voice interaction, and intelligent question caching. Currently in laptop development phase using webcam, designed for eventual Raspberry Pi 5 deployment.",
+  "createdAt": "2026-07-04T00:00:00Z",
+  "updatedAt": "2026-07-04T00:00:00Z",
+  "status": "ready_to_implement",
+  "currentPhase": "design_complete",
+  "decisions": {
+    "embeddingModel": "all-MiniLM-L6-v2",
+    "entityExtraction": "regex+dateparser",
+    "faceRegistration": "auto-register",
+    "visionFpsDuringLlm": 2
+  }
+}

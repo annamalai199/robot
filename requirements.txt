@@ -1,0 +1,50 @@
+# Core ML & Vision
+ultralytics>=8.0.0  # YOLOv8 pose detection
+insightface>=0.7.0  # Face recognition (buffalo_s)
+onnxruntime>=1.15.0  # Required by insightface
+opencv-python>=4.8.0  # Computer vision
+numpy>=1.24.0
+
+# Tracking
+lap>=0.4.0  # Linear assignment for ByteTrack
+
+# Vector Search & Embeddings
+faiss-cpu>=1.7.4  # Facebook AI Similarity Search
+sentence-transformers>=2.2.2  # Question embeddings for semantic cache
+
+# LLM & Reasoning
+ollama>=0.1.0  # Local LLM client
+langgraph>=0.0.20  # LangGraph for reasoning workflow
+langchain>=0.1.0  # LangChain core (langgraph dependency)
+langchain-community>=0.0.20  # Community integrations
+
+# Voice Processing
+faster-whisper>=0.9.0  # Local speech-to-text
+piper-tts>=1.2.0  # Local text-to-speech
+pyaudio>=0.2.13  # Audio I/O
+
+# Database
+sqlite3  # Built-in Python (no install needed, just for documentation)
+
+# Entity Extraction
+dateparser>=1.1.8  # Natural language date parsing
+regex>=2023.0.0  # Advanced regex patterns
+
+# Utilities
+python-dotenv>=1.0.0  # Environment variable management
+pydantic>=2.0.0  # Data validation
+typing-extensions>=4.7.0  # Type hints
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+pytest-cov>=4.1.0
+
+# Development
+black>=23.7.0  # Code formatter
+flake8>=6.1.0  # Linter
+mypy>=1.5.0  # Type checker
+ipython>=8.14.0  # Interactive shell for debugging
+
+# Note: Pin exact versions after initial setup with: pip freeze > requirements.txt
