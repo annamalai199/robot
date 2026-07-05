@@ -515,7 +515,7 @@ Each module in `tests/<module>/` with matching structure:
 - `test_intents.py` — known phrase returns canned response, unknown returns None
 - `test_safety_gate.py` — all 6 cases (in-range, too close, too far, sensor fault, None, sensor_ok=False)
 - `test_store.py` — full state machine (NEW→GREETED→AWAY→RETURNED)
-- `test_cache_manager.py` — **critical regression:** today/yesterday entity mismatch
+- `test_cache_manager.py` — **critical regression:** HOD/placement officer entity mismatch (semantically similar but different subjects)
 
 ### Integration Tests
 
@@ -530,7 +530,7 @@ Each module in `tests/<module>/` with matching structure:
 **`test_e2e_repeated_question_cache.py`:**
 - Ask novel question → LLM answer → ask exact repeat → cache hit
 - Ask paraphrase → semantic cache hit
-- Ask today/yesterday variant → cache miss (entity gate)
+- Ask HOD vs placement officer → cache miss (entity gate prevents wrong-subject answer)
 
 **`test_e2e_latency_budget.py`:**
 - Run full pipeline N=50 times, measure p50/p95 per stage
