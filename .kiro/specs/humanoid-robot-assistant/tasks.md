@@ -503,6 +503,8 @@
 - [ ] Outputs CSV with per-frame timings
 - [ ] Fails build if any stage's p95 > laptop budget (Section 8 of design)
 - [ ] Test video: 1-2 people, hand raise, face clearly visible
+- [ ] **Test video MUST include segment where two people's paths cross or bboxes overlap**
+- [ ] **Manual validation checklist: inspect logged track_ids during crossing segment, confirm no ID swap occurred (this validates ByteTrack's Hungarian algorithm vs greedy matching - cannot be automated in unit tests)**
 
 **Dependencies:** Task 3.7
 

@@ -1,0 +1,20 @@
+# Custom ByteTrack configuration for humanoid robot assistant
+# Based on ultralytics/cfg/trackers/bytetrack.yaml
+
+# Tracker type (do not modify)
+tracker_type: bytetrack
+
+# Tracking thresholds
+track_high_thresh: 0.5  # First-stage detection threshold
+track_low_thresh: 0.1   # Second-stage low-confidence detection threshold for occlusion recovery
+new_track_thresh: 0.6   # Threshold to initialize new tracks
+
+# Occlusion tolerance: keep lost tracks alive for this many frames
+# Matches TRACK_MAX_AGE from config.py (30 frames)
+track_buffer: 30
+
+# Matching threshold for IoU-based association
+match_thresh: 0.8
+
+# Whether to fuse confidence scores with IoU distances
+fuse_score: True

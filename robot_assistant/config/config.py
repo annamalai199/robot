@@ -23,6 +23,9 @@ MOTION_GATE_THRESHOLD = 5.0  # Mean pixel difference threshold for motion detect
 # Face Recognition
 FACE_MATCH_THRESHOLD = 0.6  # FAISS distance threshold for identity match (lower = stricter)
 
+# Tracking
+TRACK_MAX_AGE = 30  # Maximum frames to keep lost tracks alive before firing TRACK_LOST
+
 # Frame Rate Control
 NORMAL_VISION_FPS = 10  # Normal tracking frame rate
 REDUCED_VISION_FPS = 2  # Reduced FPS during LLM generation

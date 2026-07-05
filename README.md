@@ -218,6 +218,9 @@ This is a college project demonstration. The following are acknowledged limitati
 - **Dense crowd handling:** Simple track-ID switching covered, not dense occlusion scenarios.
 - **Production deployment:** No TLS, authentication, or multi-tenant support.
 
+### Testing Limitations
+- **Crossing-path ID stability:** ByteTrack's Hungarian algorithm (vs greedy matching) is validated manually via Task 3.8's benchmark video inspection, not by automated unit tests, since meaningful validation requires real model inference on real people with crossing paths.
+
 ### Hardware Safety Notes
 
 **Software SafetyGate (current):**
