@@ -26,6 +26,9 @@ FACE_MATCH_THRESHOLD = 0.6  # FAISS distance threshold for identity match (lower
 # Tracking
 TRACK_MAX_AGE = 30  # Maximum frames to keep lost tracks alive before firing TRACK_LOST
 
+# Gesture Recognition
+GESTURE_KEYPOINT_CONFIDENCE_THRESHOLD = 0.5  # Minimum confidence for keypoints used in gesture detection
+
 # Frame Rate Control
 NORMAL_VISION_FPS = 10  # Normal tracking frame rate
 REDUCED_VISION_FPS = 2  # Reduced FPS during LLM generation

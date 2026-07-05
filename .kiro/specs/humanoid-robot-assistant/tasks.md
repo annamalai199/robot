@@ -438,20 +438,24 @@
 ---
 
 ### Task 3.5: Gesture Recognition
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 2 hours
 **Description:** Pure geometry check for HAND_RAISED gesture.
 
 **Acceptance Criteria:**
-- [ ] `vision/gesture.py` has `check_gesture(keypoints) -> str | None`
-- [ ] HAND_RAISED: wrist_y < shoulder_y (either wrist)
-- [ ] Returns "HAND_RAISED" or None
-- [ ] Publishes GESTURE_DETECTED event to bus
-- [ ] `tests/vision/test_gesture.py` uses synthetic keypoints
-- [ ] Test covers: wrist above shoulder, wrist below shoulder, wrist equal
-- [ ] Test asserts latency < 1ms (pure arithmetic)
+- [x] `vision/gesture.py` has `check_gesture(keypoints) -> str | None`
+- [x] HAND_RAISED: wrist_y < shoulder_y (either wrist)
+- [x] Returns "HAND_RAISED" or None
+- [x] Publishes GESTURE_DETECTED event to bus
+- [x] `tests/vision/test_gesture.py` uses synthetic keypoints
+- [x] Test covers: wrist above shoulder, wrist below shoulder, wrist equal
+- [x] Test asserts latency < 1ms (pure arithmetic)
+
+**Scope Addition:** Confidence threshold filtering added beyond original spec to avoid false positives from occluded/low-visibility keypoints. Keypoints with confidence < GESTURE_KEYPOINT_CONFIDENCE_THRESHOLD (0.5 from config) are ignored. This prevents spurious detections when YOLO marks a keypoint as present but with low confidence due to partial occlusion.
 
 **Dependencies:** Task 3.4
+
+**Completed:** 2026-07-05
 
 ---
 
