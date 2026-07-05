@@ -60,7 +60,7 @@ SENSOR_FAULT_THRESHOLD = 3  # Consecutive failed readings before marking sensor 
 # =============================================================================
 
 MODEL_PATHS = {
-    "pose": "yolov8n-pose.pt",  # YOLOv8 nano pose model
+    "pose": "yolo11n-pose.pt",  # YOLO11 nano pose model (swapped from YOLOv8n for faster CPU inference)
     "face": "buffalo_s",  # InsightFace model name
 }
 

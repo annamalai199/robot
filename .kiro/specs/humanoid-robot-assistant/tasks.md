@@ -399,17 +399,19 @@
 ### Task 3.3: YOLO Pose Detector
 **Status:** pending
 **Estimated Effort:** 3 hours
-**Description:** YOLOv8n-pose person detection with every-Kth-frame processing.
+**Description:** YOLO11n-pose person detection with every-Kth-frame processing.
 
 **Acceptance Criteria:**
 - [ ] `vision/detector.py` has `detect_poses(frame) -> list[dict]`
-- [ ] Loads YOLOv8n-pose from ultralytics
+- [ ] Loads YOLO11n-pose from ultralytics
 - [ ] Filters results: `cls == 0` (person only)
 - [ ] Returns list of dicts: `{bbox, keypoints, confidence}`
 - [ ] Keypoints: 17-point COCO format (nose, eyes, shoulders, elbows, wrists, hips, knees, ankles)
 - [ ] `tests/vision/test_detector.py` mocks YOLO output
 - [ ] Test asserts person-only filtering
 - [ ] Actual inference covered by bench_latency.py
+
+**Note:** Switched from YOLOv8n-pose to YOLO11n-pose before implementation. Independent benchmarks show YOLO11n is faster on CPU with comparable accuracy. The Ultralytics API is identical (same package, same load/predict interface, same output format), making this a drop-in replacement.
 
 **Dependencies:** Task 1.1
 

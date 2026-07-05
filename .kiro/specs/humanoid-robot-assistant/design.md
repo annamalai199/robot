@@ -6,7 +6,7 @@ A modular, event-driven humanoid robot assistant optimized for sub-second respon
 
 ### Core Architecture Principles
 
-1. **Lightweight first** — Pretrained nano models (YOLOv8n-pose, InsightFace buffalo_s), zero training pipelines
+1. **Lightweight first** — Pretrained nano models (YOLO11n-pose, InsightFace buffalo_s), zero training pipelines
 2. **Latency budget over accuracy** — Every stage measured against strict targets (Section 8 of architecture)
 3. **LLM as exception path** — Deterministic intent/gesture lookup and multi-layer cache before LLM
 4. **MCP in reasoning only** — Never in hot path (vision, motion, gesture, cache lookup)
@@ -285,7 +285,7 @@ Frame → motion_gate (diff < threshold?) → SKIP (no motion, save 150ms)
 - Latency: <5ms
 
 **`detector.py`:**
-- YOLOv8n-pose from ultralytics
+- YOLO11n-pose from ultralytics (swapped from YOLOv8n for faster CPU inference; same API, same output format)
 - Filter: `cls == 0` (person only)
 - Every Kth frame (K=5 in config)
 - Latency target: <150ms on Pi 5 (laptop is faster)
@@ -363,7 +363,7 @@ SENSOR_TIMEOUT_MS = 100
 
 # Models
 MODEL_PATHS = {
-    "pose": "yolov8n-pose.pt",
+    "pose": "yolo11n-pose.pt",  # YOLO11 nano pose (swapped from YOLOv8n for faster CPU inference)
     "face": "buffalo_s"
 }
 
@@ -879,7 +879,7 @@ class VisionPipeline:
 - LLM (Gemma3:1b): ~85% CPU utilization across all cores
 - Combined (2 FPS + LLM): ~93% total, no thermal throttling for 3s burst
 
-**Note:** These figures are projected from published Pi 5 YOLOv8n-pose and Ollama benchmarks, not measured on actual hardware. To be confirmed empirically in Phase 5 (Pi migration).
+**Note:** These figures are projected from published Pi 5 YOLO11n-pose and Ollama benchmarks, not measured on actual hardware. To be confirmed empirically in Phase 5 (Pi migration). YOLO11n-pose was chosen over YOLOv8n-pose for faster CPU inference with comparable accuracy.
 
 **Rationale:** 2 FPS is the estimated sweet spot — maintains awareness without starving LLM. Lower (1 FPS) risks missing fast movements; higher (5 FPS) may cause LLM slowdown on Pi.
 
@@ -925,7 +925,7 @@ Before declaring laptop phase complete:
 ## References
 
 - Architecture v4: Full specification document (provided)
-- YOLOv8n-pose: https://github.com/ultralytics/ultralytics
+- YOLO11n-pose: https://github.com/ultralytics/ultralytics
 - InsightFace buffalo_s: https://github.com/deepinsight/insightface
 - FAISS: https://github.com/facebookresearch/faiss
 - faster-whisper: https://github.com/SYSTRAN/faster-whisper
