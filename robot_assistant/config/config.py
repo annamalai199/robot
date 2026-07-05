@@ -27,6 +27,9 @@ FACE_MATCH_THRESHOLD = 0.6  # FAISS distance threshold for identity match (lower
 NORMAL_VISION_FPS = 10  # Normal tracking frame rate
 REDUCED_VISION_FPS = 2  # Reduced FPS during LLM generation
 
+# Tracking Configuration
+TRACK_MAX_AGE = 30  # Max frames to keep track alive without matching detection (occlusion tolerance)
+
 # =============================================================================
 # Cache Configuration
 # =============================================================================
