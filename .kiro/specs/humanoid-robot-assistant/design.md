@@ -444,7 +444,7 @@ From architecture Section 8, **laptop targets** (Pi 5 targets in parentheses):
 | SafetyGate decision | <5ms | <5ms | Excludes sensor read |
 | Ultrasonic sensor read | N/A | ~50-60ms | Physical sound round-trip |
 | Exact cache hit | <5ms | <5ms | Hash lookup |
-| Semantic cache hit | <25ms | <35ms | Embedding + FAISS search + entity gate (measured: p50=23ms, p95=32ms laptop) |
+| Semantic cache hit | <35ms | <35ms | Embedding + FAISS search + entity gate (measured: p50=23ms, p95=32ms laptop) |
 | Motion gate | <5ms | <5ms | Frame diff |
 | YOLO inference | <50ms | 80-200ms | Laptop GPU vs Pi CPU |
 | Tracker update | <5ms | <5ms | ByteTrack is fast |
