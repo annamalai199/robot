@@ -302,54 +302,60 @@
 ## Phase 2: Voice I/O
 
 ### Task 2.1: Audio I/O
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 2 hours
 **Description:** Laptop mic/speaker capture using PyAudio.
 
 **Acceptance Criteria:**
-- [ ] `voice/audio_io.py` has `capture_audio() -> generator[bytes]` for mic
-- [ ] Has `play_audio(audio_bytes)` for speaker
-- [ ] 16kHz, mono, 16-bit PCM format
-- [ ] Chunk size: 1024 frames
-- [ ] Handles device selection (default mic/speaker)
-- [ ] No dedicated test (covered by STT/TTS tests)
+- [x] `voice/audio_io.py` has `capture_audio() -> generator[bytes]` for mic
+- [x] Has `play_audio(audio_bytes)` for speaker
+- [x] 16kHz, mono, 16-bit PCM format
+- [x] Chunk size: 1024 frames
+- [x] Handles device selection (default mic/speaker)
+- [x] No dedicated test (covered by STT/TTS tests)
 
 **Dependencies:** Task 1.1
+
+**Completed:** 2026-07-05
 
 ---
 
 ### Task 2.2: Speech-to-Text (STT)
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 3 hours
 **Description:** Local STT using faster-whisper.
 
 **Acceptance Criteria:**
-- [ ] `voice/stt.py` has `transcribe_stream(audio_generator) -> str`
-- [ ] Uses faster-whisper `base` model (CPU)
-- [ ] Streaming transcription (chunk-based)
-- [ ] Returns final transcript when silence detected (VAD)
-- [ ] `tests/voice/test_stt.py` feeds short test audio clip
-- [ ] Test asserts non-empty transcript and latency < 2s for 5s clip
-- [ ] Not exact transcript matching (too flaky)
+- [x] `voice/stt.py` has `transcribe_stream(audio_generator) -> str`
+- [x] Uses faster-whisper `base` model (CPU)
+- [x] Streaming transcription (chunk-based)
+- [x] Returns final transcript when silence detected (VAD)
+- [x] `tests/voice/test_stt.py` feeds short test audio clip
+- [x] Test asserts non-empty transcript and latency < 2s for 5s clip
+- [x] Not exact transcript matching (too flaky)
 
 **Dependencies:** Task 2.1
+
+**Completed:** 2026-07-05
 
 ---
 
 ### Task 2.3: Text-to-Speech (TTS)
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 2.5 hours
 **Description:** Local TTS using Piper.
 
 **Acceptance Criteria:**
-- [ ] `voice/tts.py` has `synthesize(text) -> bytes`
-- [ ] Uses Piper with `en_US-lessac-medium` voice
-- [ ] Streaming synthesis (start playback before full render)
-- [ ] Returns audio bytes in same format as audio_io (16kHz mono PCM)
-- [ ] `tests/voice/test_tts.py` synthesizes short text ("Hello world")
-- [ ] Test asserts non-empty audio and first chunk latency < 500ms
+- [x] `voice/tts.py` has `synthesize(text) -> bytes`
+- [x] Uses Piper with `en_US-lessac-medium` voice
+- [x] Streaming synthesis (start playback before full render)
+- [x] Returns audio bytes in same format as audio_io (16kHz mono PCM)
+- [x] `tests/voice/test_tts.py` synthesizes short text ("Hello world")
+- [x] Test asserts non-empty audio and first chunk latency < 500ms
 
 **Dependencies:** Task 2.1
+
+**Completed:** 2026-07-05
 
 ---
 
@@ -719,13 +725,13 @@
 
 **Phases:**
 1. Core Infrastructure (14 tasks, ~32 hours) - ✅ **COMPLETE** (14/14)
-2. Voice I/O (3 tasks, ~7.5 hours) - 🔄 **IN PROGRESS** (0/3)
+2. Voice I/O (3 tasks, ~7.5 hours) - ✅ **COMPLETE** (3/3)
 3. Vision Pipeline (8 tasks, ~21 hours) - ⏳ Pending
 4. Integration (8 tasks, ~17.5 hours) - ⏳ Pending
 5. Pi Migration (5 tasks, deferred)
 6. Optimization (3 tasks, deferred)
 
-**Current Status:** Phase 1 complete (14/14 tasks, 368 tests passing). Proceeding to Phase 2 (Voice I/O).
+**Current Status:** Phase 2 complete (3/3 tasks, 427 tests passing). Proceeding to Phase 3 (Vision Pipeline).
 
-**Next Action:** Task 2.1 (Audio I/O with PyAudio)
+**Next Action:** Task 3.1 (Video Capture with OpenCV)
 
