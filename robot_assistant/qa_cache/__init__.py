@@ -27,6 +27,12 @@ from robot_assistant.qa_cache.entity_extractor import (
     get_subject_patterns,
 )
 
+from robot_assistant.qa_cache.semantic_cache import (
+    embed_question,
+    search,
+    add,
+)
+
 __all__ = [
     # Exact cache
     "get",
@@ -43,4 +49,8 @@ __all__ = [
     "entities_match",
     "add_subject_pattern",
     "get_subject_patterns",
+    # Semantic cache
+    "embed_question",
+    "search",
+    "add",
 ]
