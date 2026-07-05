@@ -213,6 +213,17 @@ assert result is None  # Different subject entity (hod vs placement) - semantica
 
 **Rationale:** Semantic similarity alone is dangerous — "Who is the HOD?" and "Who is the placement officer?" have high cosine similarity (~0.90+) but completely different correct answers. Entity extraction catches that 'hod' ≠ 'placement', preventing cache hit. Entity gate adds ~2ms but prevents returning the wrong person's name.
 
+**Known Limitation: Threshold Boundary Behavior**
+
+The semantic cache threshold of 0.92 is intentionally high to reduce false positives, but this means near-boundary paraphrases can inconsistently hit or miss cache depending on exact wording:
+
+- **Example HIT:** "What is the HOD's name?" vs "Who is the HOD?" → similarity 0.9221 (just above 0.92) → cache HIT
+- **Example MISS:** "Library location?" vs "Could you tell me where the library is located?" → similarity 0.8810 (below 0.92) → cache MISS
+
+This is **expected behavior**, not a bug. The high threshold prevents false positives (e.g., "Who is the HOD?" incorrectly matching "Who is the placement officer?"). Paraphrases that fall below 0.92 will generate fresh LLM answers, ensuring correctness at the cost of slightly lower cache hit rate. If the threshold were lowered to catch more paraphrases (e.g., 0.85), it would increase false positive risk where the entity gate becomes the primary defense.
+
+Measured on `all-MiniLM-L6-v2` embeddings with laptop CPU. Threshold is configurable via `config.SEMANTIC_CACHE_THRESHOLD`.
+
 ---
 
 ### 5. LangGraph Reasoning Branch (`reasoning/`)

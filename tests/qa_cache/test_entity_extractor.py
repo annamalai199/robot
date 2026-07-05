@@ -93,6 +93,32 @@ def test_person_extraction_dr_title():
     assert result["subject"] is None
 
 
+def test_person_extraction_possessive_s_stripped():
+    """Test that possessive 's is stripped before stopword check.
+    
+    CRITICAL REGRESSION TEST: "HOD's" must be treated as "HOD" (a stopword),
+    not as a person name. Without stripping possessive 's, "HOD's" would be
+    extracted as a person, causing false entity mismatches in cache manager.
+    
+    Bug history: Initially "What is the HOD's name?" extracted person="HOD's",
+    while "Tell me the HOD's name" extracted person=None, causing cache misses
+    for legitimate paraphrases. Fixed by stripping possessive 's before stopword check.
+    """
+    result = entity_extractor.extract_entities("What is the HOD's name?")
+    
+    # "HOD's" should be stripped to "HOD", which is in stopwords
+    assert result["person"] is None  # Not "HOD's"
+    assert result["subject"] == "hod"
+    
+    # Also test with other possessive patterns
+    result2 = entity_extractor.extract_entities("Tell me the HOD's email")
+    assert result2["person"] is None
+    
+    result3 = entity_extractor.extract_entities("What is the library's location?")
+    assert result3["person"] is None
+    assert result3["subject"] == "library"
+
+
 def test_person_extraction_prof_title():
     """Test that 'Prof.' is extracted as person."""
     result = entity_extractor.extract_entities("Where is Prof. Raman?")
