@@ -135,17 +135,21 @@ def list_audio_devices() -> dict:
         for i in range(audio.get_device_count()):
             device_info = audio.get_device_info_by_index(i)
             
+            # Use .get() with default to handle None values from virtual/disabled devices
+            max_input = device_info.get('maxInputChannels') or 0
+            max_output = device_info.get('maxOutputChannels') or 0
+            
             device_data = {
                 'index': i,
                 'name': device_info.get('name'),
-                'channels': device_info.get('maxInputChannels') if device_info.get('maxInputChannels') > 0 else device_info.get('maxOutputChannels'),
+                'channels': max_input if max_input > 0 else max_output,
                 'sample_rate': int(device_info.get('defaultSampleRate', 0))
             }
             
-            if device_info.get('maxInputChannels', 0) > 0:
+            if max_input > 0:
                 input_devices.append(device_data)
             
-            if device_info.get('maxOutputChannels', 0) > 0:
+            if max_output > 0:
                 output_devices.append(device_data)
         
         return {
