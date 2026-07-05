@@ -5,6 +5,8 @@ Three-tier cache with entity gating:
 2. Semantic cache (Task 1.10) - FAISS vector similarity
 3. Entity gate (Task 1.9) - Prevents wrong-but-similar answers
 
+Orchestrated by Cache Manager (Task 1.11).
+
 Design from Section 4 of design.md.
 """
 
@@ -33,6 +35,12 @@ from robot_assistant.qa_cache.semantic_cache import (
     add,
 )
 
+from robot_assistant.qa_cache.cache_manager import (
+    check_cache,
+    write_cache,
+    clear_cache,
+)
+
 __all__ = [
     # Exact cache
     "get",
@@ -53,4 +61,8 @@ __all__ = [
     "embed_question",
     "search",
     "add",
+    # Cache manager
+    "check_cache",
+    "write_cache",
+    "clear_cache",
 ]

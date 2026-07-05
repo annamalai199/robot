@@ -89,8 +89,12 @@ def extract_entities(question: str) -> dict:
     for word in words:
         # Check if word starts with uppercase and is not a stopword
         if word and word[0].isupper():
-            # Remove trailing punctuation for stopword check
+            # Remove trailing punctuation AND possessive 's for stopword check
             word_clean = word.rstrip('.,!?;:')
+            # Also strip possessive 's (e.g., "HOD's" -> "HOD")
+            if word_clean.endswith("'s") or word_clean.endswith("'s"):  # Handle both ' and '
+                word_clean = word_clean[:-2]
+            
             if word_clean.lower() not in STOPWORDS:
                 person = word_clean
                 break  # Take first match
