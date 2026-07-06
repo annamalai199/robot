@@ -304,7 +304,7 @@ Frame → motion_gate (diff < threshold?) → SKIP (no motion, save 150ms)
 - InsightFace buffalo_s embeddings
 - FAISS index of known faces
 - **Only run on new track_id** (not every frame)
-- Distance threshold: 0.6
+- Distance threshold: 1.08
 - On match: emit `IDENTITY_RESOLVED` with `embedding_id`
 - On no match: generate new `embedding_id`, register in FAISS
 
@@ -351,7 +351,7 @@ Frame → motion_gate (diff < threshold?) → SKIP (no motion, save 150ms)
 # Vision
 YOLO_FRAME_INTERVAL_K = 5
 MOTION_GATE_THRESHOLD = 5.0
-FACE_MATCH_THRESHOLD = 0.6
+FACE_MATCH_THRESHOLD = 1.08
 
 # Cache
 SEMANTIC_CACHE_THRESHOLD = 0.92

@@ -21,7 +21,14 @@ YOLO_FRAME_INTERVAL_K = 5  # Run pose model every Kth frame
 MOTION_GATE_THRESHOLD = 5.0  # Mean pixel difference threshold for motion detection
 
 # Face Recognition
-FACE_MATCH_THRESHOLD = 0.6  # FAISS distance threshold for identity match (lower = stricter)
+# Threshold empirically derived from real-world validation (Task 3.6):
+#   Same-person variance (webcam): 0.82-0.97 (2 sessions, 6 captures total)
+#   Different-person separation (JPG): 1.19-1.34 (4 subjects, 6 pairwise comparisons)
+#   Threshold: 1.08 (midpoint with ±0.11 safety margins)
+#   Holdout validation: 1.24 with 0.16 margin (passes)
+# Note: Sample size adequate for demo-scale validation; broader demographic/lighting
+#       coverage would be needed for production use.
+FACE_MATCH_THRESHOLD = 1.08  # FAISS L2 distance threshold for identity match (lower = stricter)
 
 # Tracking
 TRACK_MAX_AGE = 30  # Maximum frames to keep lost tracks alive before firing TRACK_LOST

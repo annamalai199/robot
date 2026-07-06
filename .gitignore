@@ -42,6 +42,7 @@ venv.bak/
 robot_assistant/data/memory.db
 robot_assistant/data/data_version.txt
 robot_assistant/data/vector_index/
+robot_assistant/data/test_images/
 robot_assistant/data/*.index
 robot_assistant/data/*.json
 robot_assistant/data/*.pkl
