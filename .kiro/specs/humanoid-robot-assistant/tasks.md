@@ -506,18 +506,33 @@ FACE_MATCH_THRESHOLD empirically derived from 4 subjects and 6 pairwise comparis
 ---
 
 ### Task 3.7: Vision Pipeline Integration
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 2.5 hours
 **Description:** Wire all 5 vision stages into a single processing loop.
 
 **Acceptance Criteria:**
-- [ ] Main vision loop in `vision/capture.py` or new `vision/pipeline.py`
-- [ ] Flow: frame → motion_gate → (if motion) YOLO every Kth frame → tracker every frame → gesture → face_id (new tracks only)
-- [ ] Publishes events: GESTURE_DETECTED, IDENTITY_RESOLVED, TRACK_LOST
-- [ ] Runs in separate thread/async task (non-blocking)
-- [ ] No test (covered by integration tests)
+- [x] Main vision loop in `vision/pipeline.py` (new module)
+- [x] Flow: frame → motion_gate → (if motion) YOLO every Kth frame → tracker every frame → gesture → face_id (new tracks only)
+- [x] Publishes events: GESTURE_DETECTED (via gesture.check_gesture), IDENTITY_RESOLVED (via face_id.identify_face), TRACK_LOST (via tracker.update)
+- [x] Runs in separate thread (non-blocking) via start_pipeline()/stop_pipeline() API
+- [x] No dedicated unit test (integration smoke test in scripts/smoke_test_pipeline_integration.py confirms start/stop lifecycle)
+
+**Implementation Notes:**
+- Created `robot_assistant/vision/pipeline.py` with threading-based control:
+  - `start_pipeline()`: Launches vision loop in background thread
+  - `stop_pipeline()`: Graceful shutdown with configurable timeout
+  - `is_pipeline_running()`: Status check
+  - `run_pipeline()`: Main processing loop (not called directly)
+- Event publishing delegated to individual modules (gesture, face_id, tracker)
+- Smoke test validates 5-second run with start/stop/restart cycles
+- Demo script: `examples/vision_pipeline_demo.py` shows real-time event printing
+
+**Known Limitation:**
+First face identification in a process may delay pipeline shutdown by up to ~7s if stop_pipeline() is called during cold model load (measured worst case: 7.199s). This is a one-time cost; subsequent stops complete in <1s. See TASK_3.7_COMPLETE.md and PIPELINE_STOP_TIMING_INVESTIGATION.md for full analysis.
 
 **Dependencies:** Tasks 3.2, 3.3, 3.4, 3.5, 3.6
+
+**Completed:** 2026-07-06
 
 ---
 

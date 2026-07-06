@@ -7,7 +7,8 @@ Components:
 - tracker: ByteTrack multi-person tracking with stable IDs
 - gesture: Gesture recognition from keypoints
 - face_id: Face embedding and identification with FAISS
+- pipeline: Integrated vision pipeline orchestrating all stages
 """
 
 # Lazy imports - modules are imported when accessed to avoid dependency issues
-__all__ = ['capture', 'motion_gate', 'detector', 'tracker', 'gesture', 'face_id']
+__all__ = ['capture', 'motion_gate', 'detector', 'tracker', 'gesture', 'face_id', 'pipeline']
