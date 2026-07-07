@@ -567,19 +567,29 @@ Budget violations documented as hardware limitations (CPU-bound YOLO11n-pose and
 ## Phase 4: Integration
 
 ### Task 4.1: E2E Gesture Handshake Test
-**Status:** pending
+**Status:** ✅ completed
 **Estimated Effort:** 2 hours
 **Description:** End-to-end test of gesture → action flow with zero LLM calls.
 
 **Acceptance Criteria:**
-- [ ] `tests/integration/test_e2e_gesture_handshake.py` creates synthetic GESTURE_DETECTED event
-- [ ] Publishes event to bus, asserts Decision Engine emits ACTION event
-- [ ] Asserts SafetyGate passes (distance_cm=None in simulated phase)
-- [ ] Asserts ACTION event logged (no actual servo movement)
-- [ ] Mocks LLM client, asserts zero calls (Path A, deterministic)
-- [ ] Test runs in <100ms
+- [x] `tests/integration/test_e2e_gesture_handshake.py` creates synthetic GESTURE_DETECTED event
+- [x] Publishes event to bus, asserts Decision Engine emits ACTION event
+- [x] Asserts SafetyGate passes (distance_cm=None in simulated phase)
+- [x] Asserts ACTION event logged (no actual servo movement)
+- [x] Mocks LLM client, asserts zero calls (Path A, deterministic)
+- [x] Test runs in <100ms (measured: 0.0ms)
+
+**Implementation Notes:**
+- Single true E2E test validating complete flow: GESTURE_DETECTED → gesture_actions → ACTION → SafetyGate
+- Captures real ACTION event published by gesture_actions (not hand-constructed)
+- Verifies SafetyGate allows action with distance_cm=None (simulation mode)
+- Verifies both WARNING (simulation) and INFO (motion planner) logs from SafetyGate
+- Confirms no ACTION_BLOCKED events published
+- Zero LLM calls proves gesture flow is separate from text routing (deterministic by design)
 
 **Dependencies:** Tasks 1.7, 1.5
+
+**Completed:** 2026-07-07
 
 ---
 
