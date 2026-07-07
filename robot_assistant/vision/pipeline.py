@@ -3,9 +3,11 @@
 Wires together the 5-stage vision cascade:
 1. Video capture (capture.py)
 2. Motion gate filter (motion_gate.py)
-3. YOLO pose detection every Kth frame (detector.py)
-4. ByteTrack multi-person tracking (tracker.py)
-5. Gesture recognition + Face ID (gesture.py, face_id.py)
+3. YOLO pose detection + ByteTrack multi-person tracking combined (tracker.py)
+   - tracker.update() internally runs model.track() which performs full YOLO
+     inference followed by ByteTrack's Hungarian matching algorithm
+4. Gesture recognition (gesture.py)
+5. Face ID (face_id.py)
 
 Publishes events: GESTURE_DETECTED, IDENTITY_RESOLVED, TRACK_LOST
 Designed to run in a separate thread/async task (non-blocking).
@@ -16,7 +18,7 @@ import logging
 import time
 import threading
 from typing import Optional, Set
-from robot_assistant.vision import capture, motion_gate, detector, tracker, gesture, face_id
+from robot_assistant.vision import capture, motion_gate, tracker, gesture, face_id
 from robot_assistant.config import config
 
 logger = logging.getLogger(__name__)
@@ -33,8 +35,10 @@ def run_pipeline(camera_index: int = 0):
     Orchestrates all 5 vision stages in a single processing loop:
     - Frame capture from webcam
     - Motion detection filter (skip processing if no motion)
-    - YOLO pose detection every Kth frame (K from config)
-    - ByteTrack tracking every frame when YOLO runs
+    - YOLO pose detection + ByteTrack tracking (combined via tracker.update())
+      Every Kth frame (K from config), tracker.update() runs model.track()
+      which performs full YOLO inference followed by ByteTrack's Hungarian
+      matching algorithm to maintain consistent track IDs across frames
     - Gesture recognition on all tracked persons
     - Face identification on new track IDs only
     
@@ -103,7 +107,7 @@ def run_pipeline(camera_index: int = 0):
     frame_count = 0
     yolo_run_count = 0
     motion_detected_count = 0
-    last_detections = []  # Cache detections for frames between YOLO runs
+    last_tracked_objects = []  # Cache tracked objects for frames between YOLO runs
     seen_track_ids: Set[int] = set()  # Track IDs we've already run face_id on
     
     try:
@@ -137,41 +141,34 @@ def run_pipeline(camera_index: int = 0):
             
             motion_time = (time.time() - motion_start) * 1000
             
-            # Stage 2: YOLO pose detection (every Kth frame when motion detected)
+            # Stage 2+3: YOLO detection + ByteTrack tracking (combined)
+            # tracker.update() runs model.track() which performs YOLO inference + tracking
+            # Returns tracked objects with bbox, keypoints, track_id - no need for separate detect_poses()
             run_yolo = (frame_count % config.YOLO_FRAME_INTERVAL_K == 0)
             
             if run_yolo:
-                yolo_start = time.time()
                 yolo_run_count += 1
-                detections = detector.detect_poses(frame, conf_threshold=0.5)
-                last_detections = detections
-                yolo_time = (time.time() - yolo_start) * 1000
-                
-                logger.debug(f"Frame {frame_count}: YOLO detected {len(detections)} person(s) "
-                           f"(motion_gate: {motion_time:.1f}ms, YOLO: {yolo_time:.1f}ms)")
-            else:
-                # Use cached detections from previous YOLO run
-                detections = last_detections
-                yolo_time = 0
-            
-            # Check stop signal before expensive tracking/face_id
-            if _pipeline_stop_event.is_set():
-                logger.info("Pipeline stop signal received before tracking")
-                break
-            
-            # Stage 3: ByteTrack tracking (runs every frame when we have detections)
-            # Note: tracker.update() runs YOLO internally with tracking enabled
-            # We need to refactor this to use our detections, but for now we call
-            # tracker.update() which will run YOLO again with tracking
-            if run_yolo:
                 tracker_start = time.time()
                 tracked_objects = tracker.update(frame, conf_threshold=0.5)
                 tracker_time = (time.time() - tracker_start) * 1000
                 
-                logger.debug(f"Frame {frame_count}: Tracking {len(tracked_objects)} person(s) "
-                           f"(tracker: {tracker_time:.1f}ms)")
+                # Cache tracked objects for frames between YOLO runs
+                last_tracked_objects = tracked_objects
                 
-                # Stage 4: Gesture recognition (all tracked persons)
+                logger.debug(f"Frame {frame_count}: Tracked {len(tracked_objects)} person(s) "
+                           f"(motion_gate: {motion_time:.1f}ms, detect+track: {tracker_time:.1f}ms)")
+            else:
+                # Use cached tracked objects from previous YOLO run
+                tracked_objects = last_tracked_objects
+                tracker_time = 0
+            
+            # Check stop signal before expensive gesture/face_id
+            if _pipeline_stop_event.is_set():
+                logger.info("Pipeline stop signal received before gesture/face_id")
+                break
+            
+            # Stage 4: Gesture recognition (all tracked persons)
+            if run_yolo:
                 gesture_start = time.time()
                 for obj in tracked_objects:
                     track_id = obj['track_id']
@@ -227,15 +224,15 @@ def run_pipeline(camera_index: int = 0):
                 
                 loop_time = (time.time() - loop_start) * 1000
                 logger.debug(f"Frame {frame_count} total: {loop_time:.1f}ms "
-                           f"(motion: {motion_time:.1f}ms, YOLO: {yolo_time:.1f}ms, "
-                           f"tracker: {tracker_time:.1f}ms, gesture: {gesture_time:.1f}ms, "
-                           f"face_id: {face_id_time:.1f}ms for {face_id_count} new tracks)")
+                           f"(motion: {motion_time:.1f}ms, detect+track: {tracker_time:.1f}ms, "
+                           f"gesture: {gesture_time:.1f}ms, face_id: {face_id_time:.1f}ms "
+                           f"for {face_id_count} new tracks)")
             
             prev_frame = frame
         
         # Pipeline stopped normally
         logger.info(f"Vision pipeline stopped after {frame_count} frames "
-                   f"({yolo_run_count} YOLO runs, "
+                   f"({yolo_run_count} detect+track runs, "
                    f"{motion_detected_count} motion detections)")
     
     except Exception as e:
